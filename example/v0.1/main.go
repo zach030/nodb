@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	s := mem.NewStorageInstance()
+	s := mem.NewStorageInstance(nil)
 	s.Insert([]byte{1, 2}, []byte{2, 3})
 	res, err := s.Search([]byte{1, 2})
 	if err != nil {

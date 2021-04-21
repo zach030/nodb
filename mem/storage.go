@@ -2,43 +2,52 @@ package mem
 
 import (
 	"errors"
+	"nodb/mem/index"
 	"sync"
 )
 
-type Atom []byte
-
-func (a Atom) ToString() string {
-	return string(a)
-}
 
 var (
 	KeyNotFound = errors.New("not found key in nodb")
 )
 
+type Option struct {
+	Index string
+}
+
+var DefaultOption = &Option{
+	Index: index.Map,
+}
+
 // 内存数据库
 // 语法分析 + 索引结构
 type Storage struct {
-	lock sync.Mutex
-	DB   map[string]Atom
+	CurrentIndex string
+	lock         sync.Mutex
+	Engine       *index.Engine
 }
 
-func NewStorageInstance() *Storage {
+func NewStorageInstance(opt *Option) *Storage {
+	if opt == nil {
+		opt = DefaultOption
+	}
 	return &Storage{
-		DB: make(map[string]Atom, 0),
+		CurrentIndex: opt.Index,
+		Engine:       index.NewIndexEngine(opt.Index),
 	}
 }
 
-func (s *Storage) Insert(key, value Atom) {
+func (s *Storage) Insert(key, value index.Atom) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.DB[key.ToString()] = value
+	err := s.Engine.Insert(s.CurrentIndex, key, value)
+	if err != nil {
+
+	}
 }
 
-func (s *Storage) Search(key Atom) (Atom, error) {
+func (s *Storage) Search(key index.Atom) (index.Atom, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	if v, ok := s.DB[key.ToString()]; ok {
-		return v, nil
-	}
-	return nil, KeyNotFound
+	return s.Engine.Search(s.CurrentIndex, key)
 }
